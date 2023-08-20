@@ -1,53 +1,62 @@
 import streamlit as st
 import numpy as np
+import cv2
 from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.applications.efficientnet import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 
 # Appname
-st.set_page_config(page_title="Medical Waste Classifier", layout="wide")
+st.set_page_config(page_title="Everyday Object Classifier", layout="wide")
 
-st.markdown("<h1 style='text-align: center; color: #fff;'>Medical Waste Classifier</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #000;'>Everyday Object Classifier</h1>", unsafe_allow_html=True)
 
 # Load your model and its weights
 model = tf.keras.models.load_model('hackomedfinaaaal.h5')
-class_names = ["hazardous", "inorganic", "organic"]  # List of your class names
+class_names = ['Medical Hazardous Waste','Inorganic Waste','Organic Waste']  # List of your class names
 
 # Define the Streamlit app
 def main():
     st.write("Upload an image for classification")
+    st.title("Webcam Live Feed")
+    run = st.checkbox('Run')
+    FRAME_WINDOW = st.image([])
 
-    uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+    if run: 
+        camera = cv2.VideoCapture(0)
 
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image.', use_column_width=True)
+        while run:
+            _, frame = camera.read()
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            FRAME_WINDOW.image(image)
 
-        # Resize the image
-        image = image.resize((224, 224))  # Resize to your model's input size
+            resized_image = cv2.resize(image, (224, 224))  # Resize to your model's input size
+            image_array = img_to_array(resized_image)
+            image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
+            image_array = preprocess_input(image_array)  # Preprocess using the same function as during training
 
-        # Convert the image to an array and preprocess it
-        image_array = img_to_array(image)
-        image_array = np.expand_dims(image_array, axis=0)  # Add batch dimension
-        image_array = preprocess_input(image_array)  # Preprocess using the same function as during training
+            # Make a prediction
+            predictions = model.predict(image_array)
+            predicted_class = np.argmax(predictions[0])  # Assuming your model outputs class probabilities
 
-        # Make a prediction
-        predictions = model.predict(image_array)
+            # Print the prediction
+            predicted_probability = predictions[0][predicted_class]
+            if np.isnan(predicted_probability).any():
+                st.write("No Waste Detected(Default)")
+            else:
+                st.write(f"Predicted class: {class_names[predicted_class]}")
+                st.write(f"Probability: {predicted_probability*100:.2f}")
+              # Probability of the predicted class
 
-        # Interpret the prediction (adjust this based on your model's output)
-        predicted_class = np.argmax(predictions[0])  # Assuming your model outputs class probabilities
 
-        # Print the prediction
+            # Print the probability
+           
         
-        predicted_probability = predictions[0][predicted_class]  # Probability of the predicted class
-
-    # Print the prediction and probability
-        st.write(f"Predicted class: {class_names[predicted_class]}")
-        st.write(f"Probability: {predicted_probability:.4f}")        
+        st.write('Stopped')
+        camera.release()  # Release the camera when the loop is stopped
 
     items = [
-        'organic','inorganic','hazardous'
+        'Organic Waste', 'Inorganic Waste', 'Medical Hazardous Waste'
     ]
 
     st.title("This model is capable of classifying:")
