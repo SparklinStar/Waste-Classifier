@@ -11,7 +11,7 @@ st.set_page_config(page_title="Medical Waste Classifier", layout="wide")
 st.markdown("<h1 style='text-align: center; color: #fff;'>Medical Waste Classifier</h1>", unsafe_allow_html=True)
 
 # Load your model and its weights
-model = tf.keras.models.load_model('/home/souradip/Documents/Everyday_object_detector/hackomedfinaaaal.h5')
+model = tf.keras.models.load_model('hackomedfinaaaal.h5')
 class_names = ["hazardous", "inorganic", "organic"]  # List of your class names
 
 # Define the Streamlit app
